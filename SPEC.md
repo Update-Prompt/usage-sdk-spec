@@ -78,17 +78,19 @@ The body is `{"reports": [ ... ]}` with the fields of §2 plus `count`. The [Usa
 
 ## 7. Deprecation signals
 
-An SDK reads `GET /v1/deprecation-signals` once a minute and adds its headers and refusals to responses.
+Read `GET /v1/deprecation-signals` once a minute and add its headers and refusals to your responses.
 
 ### Which calls get signals
 
-Signals apply only to calls the router matched to a route:
+Apply signals only to calls the router matched to a route, so your SDK answers like every other SDK, whatever the router:
 
-| Call | Signals |
+| Call | What your SDK does |
 |---|---|
-| Matched a route, whatever it answers, such as a 404 for a missing order | Applied: headers, and the refusal when there is one |
-| Matched no route, so the router answered 404 or 405 itself | None: the router's answer is sent as it is |
-| No router to ask, such as a plain handler | Applied: every call counts as matched |
+| Matched a route, whatever it answers, such as a 404 for a missing order | Add the headers, and refuse when the signals say so |
+| Matched no route, so the router answered 404 or 405 itself | Nothing: send the router's answer as it is |
+| No router to ask, such as a plain handler | Treat every call as matched |
+
+Decide before the handler runs, since a refused call never reaches it. If your router only matches inside its own handler, ask it which route would match.
 
 ## 8. Conformance
 
