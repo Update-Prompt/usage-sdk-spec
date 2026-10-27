@@ -82,13 +82,13 @@ Read `GET /v1/deprecation-signals` once a minute and add its headers and refusal
 
 ### Which calls get signals
 
-Apply signals only to calls the router matched to a route, so your SDK answers like every other SDK, whatever the router:
+Apply signals to every call to a route your API has, including routes added since the last report. Leave out only the calls the router answers itself with 404 or 405, for paths and methods your API doesn't have. Then your SDK answers like every other SDK, whatever the router:
 
 | Call | What your SDK does |
 |---|---|
-| Matched a route, whatever it answers, such as a 404 for a missing order | Add the headers, and refuse when the signals say so |
-| Matched no route, so the router answered 404 or 405 itself | Nothing: send the router's answer as it is |
-| No router to ask, such as a plain handler | Treat every call as matched |
+| To a route your API has, whatever it answers, such as a 404 for a missing order | Add the headers, and refuse when the signals say so |
+| To a path or method your API doesn't have, so the router answers 404 or 405 itself | Nothing: send the router's answer as it is |
+| No router to ask, such as a plain handler | Treat every call as a call to a route |
 
 Decide before the handler runs, since a refused call never reaches it. If your router only matches inside its own handler, ask it which route would match.
 
@@ -103,6 +103,6 @@ Every SDK tests, against a fake Usage API:
 | Sending | Batches split at 1,000 reports and 1 MB, the same Idempotency-Key on every retry, `Retry-After` in seconds and as a date, capped at 5 minutes |
 | Answers | 2xx done, 429 / 5xx / network retried, other 4xx dropped |
 | Shutdown | `close` sends what's left, then drops the rest at its deadline |
-| Deprecation signals | A matched route gets them, also when it answers 404; the router's own 404 and 405 for unmatched calls get none |
+| Deprecation signals | Every call to a route your API has gets them, also when it answers 404; the router's own 404 and 405 get none |
 
 Shared test cases that any SDK can run are planned for this repository.
