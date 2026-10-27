@@ -78,17 +78,17 @@ The body is `{"reports": [ ... ]}` with the fields of §2 plus `count`. The [Usa
 
 ## 7. Deprecation signals
 
-Coming. SDKs will read `GET /v1/deprecation-signals` once a minute and add its headers and refusals to responses. This section will say exactly how, with test cases.
+An SDK reads `GET /v1/deprecation-signals` once a minute and adds its headers and refusals to responses.
 
-Already decided: **signals apply only to calls the router matched to a route.** So every SDK answers the same, whatever its router:
+### Which calls get signals
+
+Signals apply only to calls the router matched to a route:
 
 | Call | Signals |
 |---|---|
 | Matched a route, whatever it answers, such as a 404 for a missing order | Applied: headers, and the refusal when there is one |
 | Matched no route, so the router answered 404 or 405 itself | None: the router's answer is sent as it is |
 | No router to ask, such as a plain handler | Applied: every call counts as matched |
-
-A path the API doesn't have isn't a deprecated endpoint, and some routers run middleware only for matched routes, so this is the one rule every SDK can follow.
 
 ## 8. Conformance
 
@@ -101,6 +101,6 @@ Every SDK tests, against a fake Usage API:
 | Sending | Batches split at 1,000 reports and 1 MB, the same Idempotency-Key on every retry, `Retry-After` in seconds and as a date, capped at 5 minutes |
 | Answers | 2xx done, 429 / 5xx / network retried, other 4xx dropped |
 | Shutdown | `close` sends what's left, then drops the rest at its deadline |
-| Deprecation signals | Coming. Already: a matched route gets them, also when it answers 404; the router's own 404 and 405 for unmatched calls get none |
+| Deprecation signals | A matched route gets them, also when it answers 404; the router's own 404 and 405 for unmatched calls get none |
 
 Shared test cases that any SDK can run are planned for this repository.
