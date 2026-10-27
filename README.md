@@ -31,7 +31,7 @@ Everything an SDK does is also possible by calling the public Usage API directly
 | [4. Answers](SPEC.md#4-answers) | What to do with each answer: done, retry or drop, and `Retry-After` |
 | [5. Requests](SPEC.md#5-requests) | Headers and body of each request to the Usage API |
 | [6. Stats and logs](SPEC.md#6-stats-and-logs) | The three counters and how often to log |
-| [7. Deprecation signals](SPEC.md#7-deprecation-signals) | Coming: applying a deprecated API's headers and refusals |
+| [7. Deprecation signals](SPEC.md#7-deprecation-signals) | Applying a deprecated API's headers and refusals, and which calls get them |
 | [8. Conformance](SPEC.md#8-conformance) | What every SDK must test |
 
 ## Official SDKs
