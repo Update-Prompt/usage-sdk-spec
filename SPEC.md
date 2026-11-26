@@ -25,6 +25,7 @@ The send interval and the memory limit are constants, not settings.
 | `consumer` | As set by the application, or left out |
 | `queryParams` | Names from the query string, decoded. Collected per report (each name once, in the order seen, at most 50, names over 512 bytes skipped), so they never split a report. Path reports carry them as the query string instead |
 | `timestamp` | When the request started, rounded down to the minute, UTC |
+| `applied` | What the SDK applied from the deprecation signals (§7): `{"headers": [names], "status": code}`. `headers` are the names of the headers it added from the signals entry, never other headers of the response; `status` is the refusal status, left out when the application answered. `{"headers": []}` when the signals are loaded and no entry applies. Left out only before the signals were ever loaded |
 
 The one rule in the SDK: a call with **no template that answered 404** isn't counted, so scanners don't create endpoints. Only the SDK knows the status.
 
@@ -40,7 +41,7 @@ flowchart LR
 
 | Rule | Value |
 |---|---|
-| Key | Method, host, route or path, consumer and minute. A call whose key is over 8 KB is dropped, so junk requests can't fill memory |
+| Key | Method, host, route or path, consumer, minute and `applied`. A call whose key is over 8 KB is dropped, so junk requests can't fill memory |
 | Send | Every 10 s ±20% jitter: take the counts, start new ones, and split them into batches of at most 1,000 reports and under 1 MB, one endpoint per batch |
 | In flight | One request at a time, oldest batch first |
 | Memory limit | 10,000 distinct reports, counting and waiting together. When full, calls that need a new report are dropped; existing ones keep counting |
@@ -92,6 +93,19 @@ Apply signals to every call to a route your API has, including routes added sinc
 
 Decide before the handler runs, since a refused call never reaches it. If your router only matches inside its own handler, ask it which route would match.
 
+### What to report
+
+Each call's report says what your SDK applied, as `applied` (§2), so Update Prompt can show how many calls get the right responses:
+
+| Call | `applied` |
+|---|---|
+| Signals loaded, no entry applies or the call gets none | `{"headers": []}` |
+| Entry with headers only | `{"headers": ["Deprecation", "Link", "Sunset"]}`: the entry's header names |
+| Entry with a refusal | `{"headers": [...], "status": 410}`: its header names and status |
+| Signals never loaded yet | Left out |
+
+Copy the names from the entry you applied, in canonical form such as `Deprecation`, so a header added to the signals later is reported without an SDK update. Leave out a header the refusal overwrites, such as `Cache-Control`. Never list the response's other headers: they can hold information that isn't Update Prompt's to collect. Values aren't reported either.
+
 ## 8. Conformance
 
 Every SDK tests, against a fake Usage API:
@@ -103,6 +117,6 @@ Every SDK tests, against a fake Usage API:
 | Sending | Batches split at 1,000 reports and 1 MB, the same Idempotency-Key on every retry, `Retry-After` in seconds and as a date, capped at 5 minutes |
 | Answers | 2xx done, 429 / 5xx / network retried, other 4xx dropped |
 | Shutdown | `close` sends what's left, then drops the rest at its deadline |
-| Deprecation signals | Every call to a route your API has gets them, also when it answers 404; the router's own 404 and 405 get none |
+| Deprecation signals | Every call to a route your API has gets them, also when it answers 404; the router's own 404 and 405 get none; `applied` per §7, and different `applied` values split the report |
 
 Shared test cases that any SDK can run are planned for this repository.
